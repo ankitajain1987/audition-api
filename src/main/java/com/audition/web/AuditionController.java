@@ -1,40 +1,65 @@
 package com.audition.web;
 
+import com.audition.common.logging.AuditionLogger;
 import com.audition.model.AuditionPost;
+import com.audition.model.Comments;
 import com.audition.service.AuditionService;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
+import org.apache.logging.log4j.util.Strings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 public class AuditionController {
 
-    @Autowired
-    AuditionService auditionService;
+    final AuditionService auditionService;
+    final AuditionLogger auditionLogger;
+    static final Logger LOG = LoggerFactory.getLogger(AuditionController.class);
 
-    // TODO Add a query param that allows data filtering. The intent of the filter is at developers discretion.
-    @RequestMapping(value = "/posts", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody List<AuditionPost> getPosts() {
-
-        // TODO Add logic that filters response data based on the query param
-
-        return auditionService.getPosts();
+    public AuditionController(final AuditionService auditionService, final AuditionLogger auditionLogger) {
+        this.auditionService = auditionService;
+        this.auditionLogger = auditionLogger;
     }
 
-    @RequestMapping(value = "/posts/{id}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    public @ResponseBody AuditionPost getPosts(@PathVariable("id") final String postId) {
-        final AuditionPost auditionPosts = auditionService.getPostById(postId);
-
-        // TODO Add input validation
-
-        return auditionPosts;
+    @GetMapping("/posts")
+    public ResponseEntity<List<AuditionPost>> getPosts(
+        @RequestParam(value = "userId", required = false) final String userIdString) {
+        Integer userId = null;
+        if (Strings.isNotEmpty(userIdString)) {
+            userId = validateId(userIdString, "userId");
+        }
+        return ResponseEntity.ok(auditionService.getPosts(userId));
     }
 
-    // TODO Add additional methods to return comments for each post. Hint: Check https://jsonplaceholder.typicode.com/
+    @GetMapping("/posts/{id}")
+    public ResponseEntity<AuditionPost> getPostsByPostId(@PathVariable("id") final String postIdInputString) {
+        final Integer postId = validateId(postIdInputString, "id");
+        return ResponseEntity.ok(auditionService.getPostById(postId));
+    }
+
+    @GetMapping("/comments")
+    public ResponseEntity<List<Comments>> getCommentsByPostId(
+        @RequestParam(value = "postId", required = false) final String postIdInputString) {
+        final Integer postId = validateId(postIdInputString, "postId");
+        return ResponseEntity.ok(auditionService.getCommentsByPostId(postId));
+    }
+
+    private Integer validateId(final String id, final String attributeName) {
+        try {
+            return Integer.parseInt(id);
+        } catch (NumberFormatException e) {
+            auditionLogger.error(LOG, e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("Invalid %s format", attributeName));
+        }
+    }
+
 
 }

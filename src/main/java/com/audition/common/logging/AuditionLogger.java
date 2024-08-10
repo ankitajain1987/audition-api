@@ -1,6 +1,7 @@
 package com.audition.common.logging;
 
-import org.apache.commons.lang3.StringUtils;
+import java.util.Optional;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Component;
@@ -57,13 +58,43 @@ public class AuditionLogger {
         }
     }
 
-    private String createStandardProblemDetailMessage(final ProblemDetail standardProblemDetail) {
-        // TODO Add implementation here.
-        return StringUtils.EMPTY;
+
+    public String createStandardProblemDetailMessage(final ProblemDetail problemDetail) {
+        if (problemDetail == null) {
+            return "No problem detail provided.";
+        }
+
+        final StringBuilder messageBuilder = new StringBuilder();
+        appendIfNotBlank(messageBuilder, "Type: ", String.valueOf(problemDetail.getType()));
+        appendIfNotBlank(messageBuilder, "Title: ", String.valueOf(problemDetail.getTitle()));
+        appendIfNotBlank(messageBuilder, "Status: ", String.valueOf(problemDetail.getStatus()));
+        appendIfNotBlank(messageBuilder, "Detail: ", String.valueOf(problemDetail.getDetail()));
+        appendIfNotBlank(messageBuilder, "Instance: ", String.valueOf(problemDetail.getInstance()));
+        appendIfNotEmpty(messageBuilder, String.valueOf(problemDetail.getProperties()));
+
+        return Optional.of(messageBuilder.toString())
+            .filter(s -> !s.isEmpty())
+            .orElse("No additional details available.");
     }
 
+
     private String createBasicErrorResponseMessage(final Integer errorCode, final String message) {
-        // TODO Add implementation here.
-        return StringUtils.EMPTY;
+        final StringBuilder messageBuilder = new StringBuilder();
+        appendIfNotBlank(messageBuilder, "Status: ", String.valueOf(errorCode));
+        appendIfNotBlank(messageBuilder, "Message: ", String.valueOf(message));
+
+        return messageBuilder.toString();
+    }
+
+    private void appendIfNotEmpty(final StringBuilder messageBuilder, final Object value) {
+        if (value != null && !value.toString().isEmpty()) {
+            messageBuilder.append("Properties: ").append(value).append(" | ");
+        }
+    }
+
+    private void appendIfNotBlank(final StringBuilder messageBuilder, final String key, final String value) {
+        if (Strings.isNotBlank(value)) {
+            messageBuilder.append(key).append(value).append(" | ");
+        }
     }
 }
