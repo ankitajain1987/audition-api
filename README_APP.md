@@ -142,6 +142,49 @@ curl --location 'localhost:8080/comments?postId=1' \
 ]
 ```
 
+## List of changes made to code
+ - **AuditionController.java**
+   - /posts?userId={userId} - Added userId optional query param that allows data filtering.
+   - /comments?postId={postId} - Get Comments for post id API Added
+   - Added controller logic and validation for input parameters
+ 
+ - **ExceptionControllerAdvice.java**
+   - Added handler for exception
+ 
+ - **AuditionService.java**
+   - Added Service method for getCommentsByPostId
+
+- **Comments.java**
+  - New Model Comments added for comments API.
+
+- **AuditionPost.jav**
+  - New list attribute **private List<Comments> comments** added to get comments along with Post.
+
+- **AuditionIntegrationClient.java**
+  - Added implementation for all the rest API calls.
+  - Added logging and exception handling
+  - Added implementation for getComments API
+
+- **WebServiceConfiguration.java**
+  - Implemented ObjectMapper Method
+  - Modified RestTemplate bean to use Object Mappper and LoggingInterceptor
+
+- **LoggingInterceptor.java**
+  - Added LoggingInterceptor for logging requests and response format/body
+
+- **SecurityConfig.java**
+  - Added Security config file to configure authentication for actuator APIs other than Health and info.
+
+- **AuditionLogger.java**
+  - Added implementation for createStandardProblemDetailMessage method
+  - Added implementation for createBasicErrorResponseMessage
+
+- **Application.yml**
+  - Added credentials for actuator apis
+
+
+
+
 
 
 
